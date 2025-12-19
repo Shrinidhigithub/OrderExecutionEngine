@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "ts-node-dev --transpile-only --respawn src/index.ts",
     "build": "tsc -p .",
-    "start": "npm run build && node dist/index.js",
+    "start": "node dist/index.js",
     "test": "rm -rf dist && vitest run"
   },
   "dependencies": {

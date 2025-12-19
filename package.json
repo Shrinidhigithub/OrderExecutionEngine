@@ -1,0 +1,31 @@
+{
+  "name": "order-execution-engine",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "ts-node-dev --transpile-only --respawn src/index.ts",
+    "build": "tsc -p .",
+    "start": "node dist/index.js",
+    "test": "rm -rf dist && vitest run"
+  },
+  "dependencies": {
+    "@fastify/websocket": "^8.0.0",
+    "bullmq": "^1.79.0",
+    "fastify": "^4.21.0",
+    "ioredis": "^5.3.0",
+    "pg": "^8.11.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.2.0",
+    "@types/pg": "^8.6.6",
+    "@types/supertest": "^2.0.12",
+    "@types/uuid": "^9.0.2",
+    "@types/ws": "^8.5.5",
+    "supertest": "^6.3.4",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.1.6",
+    "vitest": "^4.0.15",
+    "ws": "^8.18.3"
+  }
+}

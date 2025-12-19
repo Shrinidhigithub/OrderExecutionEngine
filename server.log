@@ -1,0 +1,9 @@
+nohup: ignoring input
+
+> order-execution-engine@0.1.0 dev
+> ts-node-dev --transpile-only --respawn src/index.ts
+
+[INFO] 00:07:39 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+{"level":30,"time":1765564660661,"pid":68047,"hostname":"punith-ThinkPad-E470","msg":"Server listening at http://0.0.0.0:3000"}
+{"level":30,"time":1765564670822,"pid":68047,"hostname":"punith-ThinkPad-E470","reqId":"req-1","req":{"method":"GET","url":"/api/orders/execute?orderId=6adf41de-3ef9-4656-bbb3-3fd2a8993e15","hostname":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":54114},"msg":"incoming request"}
+{"level":30,"time":1765564670824,"pid":68047,"hostname":"punith-ThinkPad-E470","remote":"unknown","msg":"WebSocket connection attempt"}

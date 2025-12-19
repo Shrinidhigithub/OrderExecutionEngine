@@ -1,0 +1,351 @@
+{
+  "info": {
+    "_postman_id": "order-execution-engine",
+    "name": "Order Execution Engine",
+    "description": "API collection for Order Execution Engine - Market order execution with DEX routing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Submit Market Order - SOL to USDC",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tokenIn\": \"SOL\",\n  \"tokenOut\": \"USDC\",\n  \"amount\": 10\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/orders/execute",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "orders",
+            "execute"
+          ]
+        },
+        "description": "Submit a market order to swap SOL for USDC.\nResponse includes orderId and WebSocket URL for real-time updates."
+      },
+      "response": []
+    },
+    {
+      "name": "2. Submit Market Order - USDC to USDT",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tokenIn\": \"USDC\",\n  \"tokenOut\": \"USDT\",\n  \"amount\": 100\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/orders/execute",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "orders",
+            "execute"
+          ]
+        },
+        "description": "Submit a market order with different token pair and amount."
+      },
+      "response": []
+    },
+    {
+      "name": "3. Submit Market Order - RAY to SOL",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tokenIn\": \"RAY\",\n  \"tokenOut\": \"SOL\",\n  \"amount\": 50\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/orders/execute",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "orders",
+            "execute"
+          ]
+        },
+        "description": "Submit another market order with different token pair."
+      },
+      "response": []
+    },
+    {
+      "name": "4. Submit Market Order - COPE to COPE (Test High Volume)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tokenIn\": \"COPE\",\n  \"tokenOut\": \"SOL\",\n  \"amount\": 1000\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/orders/execute",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "orders",
+            "execute"
+          ]
+        },
+        "description": "Test with high volume order."
+      },
+      "response": []
+    },
+    {
+      "name": "5. Submit Market Order - FIDA to USDC",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tokenIn\": \"FIDA\",\n  \"tokenOut\": \"USDC\",\n  \"amount\": 75\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/orders/execute",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "orders",
+            "execute"
+          ]
+        },
+        "description": "Submit a market order with FIDA token."
+      },
+      "response": []
+    },
+    {
+      "name": "Error Test - Missing tokenIn",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tokenOut\": \"USDC\",\n  \"amount\": 10\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/orders/execute",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "orders",
+            "execute"
+          ]
+        },
+        "description": "Test error handling - missing required tokenIn field. Should return 400 error."
+      },
+      "response": []
+    },
+    {
+      "name": "Error Test - Missing tokenOut",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tokenIn\": \"SOL\",\n  \"amount\": 10\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/orders/execute",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "orders",
+            "execute"
+          ]
+        },
+        "description": "Test error handling - missing required tokenOut field. Should return 400 error."
+      },
+      "response": []
+    },
+    {
+      "name": "Error Test - Missing amount",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tokenIn\": \"SOL\",\n  \"tokenOut\": \"USDC\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/orders/execute",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "orders",
+            "execute"
+          ]
+        },
+        "description": "Test error handling - missing required amount field. Should return 400 error."
+      },
+      "response": []
+    },
+    {
+      "name": "Error Test - Invalid JSON",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{ invalid json }"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/orders/execute",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "orders",
+            "execute"
+          ]
+        },
+        "description": "Test error handling - invalid JSON payload. Should return 400 error."
+      },
+      "response": []
+    },
+    {
+      "name": "Error Test - Zero Amount",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tokenIn\": \"SOL\",\n  \"tokenOut\": \"USDC\",\n  \"amount\": 0\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/orders/execute",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "orders",
+            "execute"
+          ]
+        },
+        "description": "Test order with zero amount - should still accept (validation at business logic level)."
+      },
+      "response": []
+    },
+    {
+      "name": "Bulk Load Test - Order 1",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tokenIn\": \"SOL\",\n  \"tokenOut\": \"USDC\",\n  \"amount\": 1\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/orders/execute",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "orders",
+            "execute"
+          ]
+        },
+        "description": "Bulk load test - submit multiple orders simultaneously to test concurrent processing (max 10 concurrent)."
+      },
+      "response": []
+    }
+  ]
+}

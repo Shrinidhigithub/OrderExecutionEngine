@@ -11,6 +11,11 @@ const fastify = Fastify({ logger: true });
 
 fastify.register(websocketPlugin as any);
 
+// Health check endpoint
+fastify.get('/health', async (request, reply) => {
+  return { status: 'ok', timestamp: new Date().toISOString() };
+});
+
 fastify.post('/api/orders/execute', async (request, reply) => {
   const body = request.body as any;
   if (!body || !body.tokenIn || !body.tokenOut || !body.amount) {
@@ -98,12 +103,25 @@ fastify.get('/api/orders/execute', { websocket: true }, (connection, req) => {
 });
 
 const start = async () => {
-  await initDb();
-  startWorker(10);
-  await fastify.listen({ port: PORT, host: '0.0.0.0' });
+  try {
+    console.log('Initializing database...');
+    await initDb();
+    console.log('Database initialized successfully');
+    
+    console.log('Starting worker pool...');
+    startWorker(10);
+    console.log('Worker pool started with 10 concurrent workers');
+    
+    console.log(`Starting server on port ${PORT}...`);
+    await fastify.listen({ port: PORT, host: '0.0.0.0' });
+    console.log(`Server listening on http://0.0.0.0:${PORT}`);
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    throw error;
+  }
 };
 
 start().catch((e) => {
-  console.error(e);
+  console.error('Fatal error during startup:', e);
   process.exit(1);
 });

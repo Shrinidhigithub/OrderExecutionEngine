@@ -134,8 +134,19 @@ const start = async () => {
   try {
     console.log('=== Order Execution Engine Starting ===');
     console.log('PORT:', PORT);
-    console.log('DATABASE_URL:', process.env.DATABASE_URL ? '***set***' : '***not set***');
-    console.log('REDIS_URL:', process.env.REDIS_URL ? '***set***' : '***not set***');
+    console.log('DATABASE_URL:', process.env.DATABASE_URL ? '✓ set' : '✗ NOT SET - using localhost');
+    console.log('REDIS_URL:', process.env.REDIS_URL ? '✓ set' : '✗ NOT SET - using localhost');
+    
+    if (!process.env.DATABASE_URL && process.env.NODE_ENV === 'production') {
+      console.error('⚠ WARNING: DATABASE_URL not set in production environment!');
+      console.error('  Trying to use default postgresql://127.0.0.1:5432 which will fail.');
+      console.error('  Please set DATABASE_URL environment variable.');
+    }
+    if (!process.env.REDIS_URL && process.env.NODE_ENV === 'production') {
+      console.error('⚠ WARNING: REDIS_URL not set in production environment!');
+      console.error('  Trying to use default redis://127.0.0.1:6379 which will fail.');
+      console.error('  Please set REDIS_URL environment variable.');
+    }
     
     // Initialize database with retries, but don't block the server startup forever
     console.log('Initializing database...');
@@ -171,7 +182,7 @@ const start = async () => {
     console.log('=== Order Execution Engine Ready ===');
   } catch (error) {
     console.error('✗ Failed to start server:', error);
-    // Don't exit - let Railway see the logs
+    // Don't exit - let Render see the logs
     console.error('Attempting to continue despite startup error...');
   }
 };

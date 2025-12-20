@@ -2,9 +2,18 @@ import { Pool } from 'pg';
 import { sleep } from '../utils/sleep';
 
 const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:password@127.0.0.1:5432/order_engine';
+
+// Log which DB URL we're using for debugging
+if (process.env.NODE_ENV !== 'test') {
+  const displayUrl = connectionString.includes('127.0.0.1')
+    ? '127.0.0.1:5432 (local)'
+    : connectionString.replace(/:[^:]*@/, ':***@');
+  console.log(`[Database] Configured URL: ${displayUrl}`);
+}
+
 const pool = new Pool({ 
   connectionString,
-  // Increase connection timeout for Railway startup
+  // Increase connection timeout for hosting platforms
   connectionTimeoutMillis: 10000,
   idleTimeoutMillis: 30000,
   max: 20

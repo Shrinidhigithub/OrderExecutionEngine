@@ -1,7 +1,17 @@
 import IORedis from 'ioredis';
 
+// Use environment variable if available; only fall back to localhost for local development
 const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
-const redisOpts = { maxRetriesPerRequest: null } as const;
+
+// Log which URL we're using for debugging
+if (process.env.NODE_ENV !== 'test') {
+  const displayUrl = redisUrl.includes('127.0.0.1') 
+    ? '127.0.0.1:6379 (local)' 
+    : redisUrl.replace(/:[^:]*@/, ':***@').replace(/\/\d+$/, '');
+  console.log(`[Redis] Configured URL: ${displayUrl}`);
+}
+
+const redisOpts = { maxRetriesPerRequest: null, connectTimeout: 5000 } as const;
 let pub: IORedis | null = null;
 let sub: IORedis | null = null;
 let redisReady = false;

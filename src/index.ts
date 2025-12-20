@@ -12,6 +12,19 @@ const fastify = Fastify({ logger: true });
 
 fastify.register(websocketPlugin as any);
 
+// Root endpoint
+fastify.get('/', async (request, reply) => {
+  return { 
+    service: 'Order Execution Engine',
+    status: 'running',
+    endpoints: {
+      health: '/health',
+      api: '/api/orders/execute (POST with WebSocket upgrade)',
+      docs: 'See README.md for API documentation'
+    }
+  };
+});
+
 // Health check endpoint
 fastify.get('/health', async (request, reply) => {
   const result: any = { timestamp: new Date().toISOString() };

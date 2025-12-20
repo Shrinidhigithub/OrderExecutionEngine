@@ -247,3 +247,61 @@ The engine is ready to:
 
 See `SETUP_AND_TEST_GUIDE.md` for production deployment steps.
 
+---
+
+## Live Demo - WebSocket Order Stages
+
+Test the deployed API and see real-time order status updates through WebSocket:
+
+### Run Demo Command
+
+```bash
+node -e "
+const WebSocket = require('ws');
+const https = require('https');
+const postData = JSON.stringify({ tokenIn: 'SOL', tokenOut: 'USDC', amount: 50 });
+const req = https.request({
+  hostname: 'orderexecutionengine-uaws.onrender.com',
+  path: '/api/orders/execute',
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'Content-Length': postData.length }
+}, (res) => {
+  let data = '';
+  res.on('data', (c) => data += c);
+  res.on('end', () => {
+    const { orderId } = JSON.parse(data);
+    console.log('Order:', orderId);
+    const ws = new WebSocket('wss://orderexecutionengine-uaws.onrender.com/api/orders/execute?orderId=' + orderId);
+    ws.on('message', (d) => console.log('→', d.toString()));
+    ws.on('close', () => process.exit(0));
+    setTimeout(() => process.exit(0), 15000);
+  });
+});
+req.write(postData);
+req.end();
+"
+```
+
+### Demo Output
+
+```
+Order: b02dde8a-d064-43aa-84b2-c7c594ea44e0
+→ {"status":"pending"}
+→ {"status":"routing"}
+→ {"status":"building","chosen":"meteora","rQuote":{"price":101.29,"fee":0.003},"mQuote":{"price":101.04,"fee":0.002}}
+→ {"status":"submitted"}
+→ {"status":"confirmed","txHash":"1c8522be-36d8-4cd2-b792-77228107c27c","executedPrice":98.99}
+```
+
+### Order Lifecycle Stages
+
+| Stage | Status | Description |
+|-------|--------|-------------|
+| 1 | `pending` | Order received and queued for processing |
+| 2 | `routing` | Fetching quotes from Raydium & Meteora DEXs |
+| 3 | `building` | Creating transaction, shows chosen DEX with quotes |
+| 4 | `submitted` | Transaction sent to the network |
+| 5 | `confirmed` | Success with transaction hash and executed price |
+
+`failed` | Error with reason and retry attempt count |
+

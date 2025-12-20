@@ -2,7 +2,7 @@ import Fastify from 'fastify';
 import websocketPlugin from '@fastify/websocket';
 import { v4 as uuidv4 } from 'uuid';
 import { orderQueue } from './queue/worker';
-import { subscribeOrderUpdates, publishOrderUpdate, redisHealthCheck } from './utils/pubsub';
+import { subscribeOrderUpdates, publishOrderUpdate, redisHealthCheck, initRedis } from './utils/pubsub';
 import { createOrder, initDb, dbHealthCheck } from './store/orderStore';
 import { sleep } from './utils/sleep';
 import { startWorker } from './queue/worker';
@@ -150,6 +150,10 @@ const start = async () => {
         // Continue anyway - orders will fail but health endpoint will report the issue
       }
     })().catch(e => console.error('DB init task error:', e));
+    
+    // Initialize Redis in background (non-blocking)
+    console.log('Initializing Redis...');
+    initRedis().catch(e => console.warn('Redis init error (non-fatal):', e));
     
     // Start worker pool with error handling
     console.log('Starting worker pool...');

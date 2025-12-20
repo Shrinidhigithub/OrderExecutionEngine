@@ -82,14 +82,18 @@ export function subscribeOrderUpdates(orderId: string, onMessage: (msg: any) => 
     return () => {}; // Return a no-op unsubscribe function
   }
   const channel = `order:${orderId}`;
-  const handler = (_: string, message: string) => {
+  const handler = (receivedChannel: string, message: string) => {
+    // Only process messages for this specific channel
+    if (receivedChannel !== channel) return;
     try {
       onMessage(JSON.parse(message));
     } catch (e) {
       console.error('Invalid message', e);
     }
   };
-  sub.subscribe(channel).catch((err) => {
+  sub.subscribe(channel).then(() => {
+    console.log(`[Redis] Subscribed to channel: ${channel}`);
+  }).catch((err) => {
     console.error('[Redis] Subscribe error for', channel, err);
   });
   sub.on('message', handler);

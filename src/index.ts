@@ -57,76 +57,76 @@ fastify.post('/api/orders/execute', async (request, reply) => {
   return reply.send({ orderId: id, websocket: `/api/orders/execute?orderId=${id}` });
 });
 
-fastify.get('/api/orders/execute', { websocket: true }, (connection, req) => {
-  const remote = (req as any).ip || (req as any).socket?.remoteAddress || 'unknown';
-  fastify.log.info({ url: req.url, remote }, 'WebSocket connection attempt');
-  // Fastify may not have parsed `req.query` for websocket upgrades, parse safely from the URL
-  let orderId: string | undefined;
-  try {
-    const url = (req as any).url || '';
-    const parsed = new URL(url, 'http://localhost');
-    orderId = parsed.searchParams.get('orderId') || undefined;
-  } catch (e) {
-    // fallback to any available parsed query
-    orderId = ((req as any).query && (req as any).query.orderId) as string | undefined;
-  }
-  // If client provided orderId we subscribe to updates; else expecting first message with order payload
-  let unsubscribe: (() => void) | null = null;
-  try {
+// WebSocket routes need to be registered inside a plugin
+fastify.register(async function(fastify) {
+  fastify.get('/api/orders/execute', { websocket: true }, (connection, req) => {
+    // connection is SocketStream (Duplex stream with .socket = WebSocket)
+    // req is the Fastify request
+    const ws = (connection as any).socket;
+    
+    if (!ws || typeof ws.send !== 'function') {
+      console.error('[WS] No WebSocket found on connection.socket');
+      return;
+    }
+    
+    const remote = req.ip || 'unknown';
+    const rawUrl = req.url || '';
+    
+    fastify.log.info({ url: rawUrl, remote }, 'WebSocket connection');
+    
+    // Parse orderId from query params
+    const orderId = (req.query as any)?.orderId;
+    console.log('[WS] Connected, orderId:', orderId);
+    
+    // If client provided orderId we subscribe to updates
+    let unsubscribe: (() => void) | null = null;
     if (orderId) {
-      // subscribeOrderUpdates handles async subscribe errors internally and logs them
       unsubscribe = subscribeOrderUpdates(orderId, (msg) => {
         try {
-          connection.socket.send(JSON.stringify(msg));
+          ws.send(JSON.stringify(msg));
         } catch (e) {
           fastify.log.warn({ err: e }, 'Failed to send WS message');
         }
       });
     }
-  } catch (err) {
-    fastify.log.error({ err }, 'Error subscribing to Redis channel during WS upgrade');
-    try {
-      connection.socket.send(JSON.stringify({ status: 'failed', error: 'subscription error' }));
-    } catch (_) {}
-    try { connection.socket.close(); } catch (_) {}
-    return;
-  }
-
-  // log socket errors so we can see failures that might cause 500s
-  connection.socket.on('error', (err: any) => {
-    fastify.log.error({ err }, 'WebSocket socket error');
-  });
-
-  connection.socket.on('message', async (raw: any) => {
-    try {
-      const data = JSON.parse(String(raw));
-      if (data && data.tokenIn && data.tokenOut && data.amount) {
-        const id = uuidv4();
-        const order = { id, tokenIn: data.tokenIn, tokenOut: data.tokenOut, amount: Number(data.amount), status: 'pending' } as any;
-        await createOrder(order);
-        await orderQueue.add('execute', order, { attempts: 3, backoff: { type: 'exponential', delay: 500 } });
-        connection.socket.send(JSON.stringify({ orderId: id }));
-        const unsub = subscribeOrderUpdates(id, (msg) => {
-          try {
-            connection.socket.send(JSON.stringify(msg));
-          } catch (e) {
-            fastify.log.warn({ err: e }, 'Failed to send WS message for new order');
-          }
-        });
-        connection.socket.on('close', () => unsub());
-      } else {
-        connection.socket.send(JSON.stringify({ status: 'failed', error: 'invalid payload' }));
-      }
-    } catch (e) {
-      fastify.log.warn({ err: e }, 'Invalid WS payload');
+    
+    // Log socket errors
+    ws.on('error', (err: any) => {
+      fastify.log.error({ err }, 'WebSocket error');
+    });
+    
+    // Handle incoming messages (for submitting new orders via WS)
+    ws.on('message', async (raw: any) => {
       try {
-        connection.socket.send(JSON.stringify({ status: 'failed', error: 'invalid payload' }));
-      } catch (_) {}
-    }
-  });
-
-  connection.socket.on('close', () => {
-    if (unsubscribe) unsubscribe();
+        const data = JSON.parse(String(raw));
+        if (data && data.tokenIn && data.tokenOut && data.amount) {
+          const id = uuidv4();
+          const order = { id, tokenIn: data.tokenIn, tokenOut: data.tokenOut, amount: Number(data.amount), status: 'pending' } as any;
+          await createOrder(order);
+          await orderQueue.add('execute', order, { attempts: 3, backoff: { type: 'exponential', delay: 500 } });
+          ws.send(JSON.stringify({ orderId: id }));
+          const unsub = subscribeOrderUpdates(id, (msg) => {
+            try {
+              ws.send(JSON.stringify(msg));
+            } catch (e) {
+              fastify.log.warn({ err: e }, 'Failed to send WS message');
+            }
+          });
+          ws.on('close', () => unsub());
+        } else {
+          ws.send(JSON.stringify({ status: 'failed', error: 'invalid payload' }));
+        }
+      } catch (e) {
+        fastify.log.warn({ err: e }, 'Invalid WS payload');
+        try {
+          ws.send(JSON.stringify({ status: 'failed', error: 'invalid payload' }));
+        } catch (_) {}
+      }
+    });
+    
+    ws.on('close', () => {
+      if (unsubscribe) unsubscribe();
+    });
   });
 });
 

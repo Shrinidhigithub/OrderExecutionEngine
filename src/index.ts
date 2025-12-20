@@ -132,30 +132,48 @@ fastify.get('/api/orders/execute', { websocket: true }, (connection, req) => {
 
 const start = async () => {
   try {
-    console.log('Initializing database...');
-    await initDb();
-    console.log('Database initialized successfully');
+    console.log('=== Order Execution Engine Starting ===');
+    console.log('PORT:', PORT);
+    console.log('DATABASE_URL:', process.env.DATABASE_URL ? '***set***' : '***not set***');
+    console.log('REDIS_URL:', process.env.REDIS_URL ? '***set***' : '***not set***');
     
-    // Try to start worker pool, but don't block startup if Redis isn't ready yet
+    // Initialize database with retries, but don't block the server startup forever
+    console.log('Initializing database...');
+    let dbReady = false;
+    (async () => {
+      try {
+        await initDb();
+        dbReady = true;
+        console.log('✓ Database initialized successfully');
+      } catch (err) {
+        console.error('✗ Database initialization failed:', err);
+        // Continue anyway - orders will fail but health endpoint will report the issue
+      }
+    })().catch(e => console.error('DB init task error:', e));
+    
+    // Start worker pool with error handling
     console.log('Starting worker pool...');
     try {
       startWorker(10);
-      console.log('Worker pool started with 10 concurrent workers');
+      console.log('✓ Worker pool started with 10 concurrent workers');
     } catch (e) {
-      console.warn('Worker pool startup warning (Redis may not be ready yet):', e);
-      // Non-fatal: worker will try to reconnect when orders arrive
+      console.warn('⚠ Worker pool startup warning:', (e as any)?.message || e);
+      // Non-fatal: will retry on demand
     }
     
-    console.log(`Starting server on port ${PORT}...`);
+    console.log(`Starting Fastify server on port ${PORT}...`);
     await fastify.listen({ port: PORT, host: '0.0.0.0' });
-    console.log(`Server listening on http://0.0.0.0:${PORT}`);
+    console.log(`✓ Server listening on http://0.0.0.0:${PORT}`);
+    console.log('=== Order Execution Engine Ready ===');
   } catch (error) {
-    console.error('Failed to start server:', error);
-    throw error;
+    console.error('✗ Failed to start server:', error);
+    // Don't exit - let Railway see the logs
+    console.error('Attempting to continue despite startup error...');
   }
 };
 
 start().catch((e) => {
-  console.error('Fatal error during startup:', e);
-  process.exit(1);
+  console.error('✗ Fatal error during startup:', e);
+  // Still try to exit gracefully
+  setTimeout(() => process.exit(1), 1000);
 });

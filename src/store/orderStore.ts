@@ -13,6 +13,7 @@ const pool = new Pool({
 export async function initDb(retries = 30, delayMs = 2000) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
+      console.log(`[DB] Attempt ${attempt}/${retries}: Connecting to database...`);
       await pool.query(`
         CREATE TABLE IF NOT EXISTS orders (
           id TEXT PRIMARY KEY,
@@ -26,11 +27,16 @@ export async function initDb(retries = 30, delayMs = 2000) {
           updated_at TIMESTAMP DEFAULT now()
         );
       `);
+      console.log(`[DB] ✓ Connected and table initialized`);
       return true;
     } catch (err: any) {
-      const code = err?.code || err?.errno || 'unknown';
-      console.error(`DB connect/init failed (attempt ${attempt}/${retries})`, code);
-      if (attempt === retries) throw err;
+      const code = err?.code || err?.errno || err?.message || 'unknown';
+      console.error(`[DB] ✗ Attempt ${attempt}/${retries} failed:`, code);
+      if (attempt === retries) {
+        console.error(`[DB] ✗ Max retries reached. Connection string may be invalid.`);
+        throw err;
+      }
+      console.log(`[DB] Waiting ${delayMs}ms before retry...`);
       await sleep(delayMs);
     }
   }

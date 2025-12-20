@@ -123,26 +123,15 @@ const start = async () => {
     await initDb();
     console.log('Database initialized successfully');
     
-    // Ensure Redis is reachable before starting workers
-    console.log('Checking Redis connectivity...');
-    for (let attempt = 1; attempt <= 30; attempt++) {
-      try {
-        const ok = await redisHealthCheck();
-        if (ok) {
-          console.log('Redis connectivity OK');
-          break;
-        }
-      } catch (e) {
-        // ignore and retry
-      }
-      console.warn(`Redis not reachable yet (attempt ${attempt}/30). Retrying...`);
-      await sleep(2000);
-      if (attempt === 30) throw new Error('Redis unreachable');
-    }
-
+    // Try to start worker pool, but don't block startup if Redis isn't ready yet
     console.log('Starting worker pool...');
-    startWorker(10);
-    console.log('Worker pool started with 10 concurrent workers');
+    try {
+      startWorker(10);
+      console.log('Worker pool started with 10 concurrent workers');
+    } catch (e) {
+      console.warn('Worker pool startup warning (Redis may not be ready yet):', e);
+      // Non-fatal: worker will try to reconnect when orders arrive
+    }
     
     console.log(`Starting server on port ${PORT}...`);
     await fastify.listen({ port: PORT, host: '0.0.0.0' });

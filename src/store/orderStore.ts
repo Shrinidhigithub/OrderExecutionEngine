@@ -2,7 +2,13 @@ import { Pool } from 'pg';
 import { sleep } from '../utils/sleep';
 
 const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:password@127.0.0.1:5432/order_engine';
-const pool = new Pool({ connectionString });
+const pool = new Pool({ 
+  connectionString,
+  // Increase connection timeout for Railway startup
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 30000,
+  max: 20
+});
 
 export async function initDb(retries = 30, delayMs = 2000) {
   for (let attempt = 1; attempt <= retries; attempt++) {

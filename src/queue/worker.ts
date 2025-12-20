@@ -25,7 +25,6 @@ export function startWorker(concurrency = 10) {
       const order = job.data as any;
       try {
         // Wait for client to connect WebSocket before starting
-        console.log(`[Order ${order.id}] Waiting ${INITIAL_DELAY}ms for WebSocket connection...`);
         await sleep(INITIAL_DELAY);
 
         // Status 1: PENDING - Order received and queued

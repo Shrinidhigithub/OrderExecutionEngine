@@ -76,7 +76,6 @@ fastify.register(async function(fastify) {
     
     // Parse orderId from query params
     const orderId = (req.query as any)?.orderId;
-    console.log('[WS] Connected, orderId:', orderId);
     
     // If client provided orderId we subscribe to updates
     let unsubscribe: (() => void) | null = null;

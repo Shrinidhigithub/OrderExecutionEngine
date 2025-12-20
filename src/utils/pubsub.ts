@@ -3,13 +3,7 @@ import IORedis from 'ioredis';
 // Use environment variable if available; only fall back to localhost for local development
 const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
 
-// Log which URL we're using for debugging
-if (process.env.NODE_ENV !== 'test') {
-  const displayUrl = redisUrl.includes('127.0.0.1') 
-    ? '127.0.0.1:6379 (local)' 
-    : redisUrl.replace(/:[^:]*@/, ':***@').replace(/\/\d+$/, '');
-  console.log(`[Redis] Configured URL: ${displayUrl}`);
-}
+// Redis URL configured (logging suppressed for clean output)
 
 const redisOpts = { maxRetriesPerRequest: null, connectTimeout: 5000 } as const;
 let pub: IORedis | null = null;
@@ -46,7 +40,6 @@ function createRedisConnections() {
       
       redisReady = true;
       redisError = null;
-      console.log('[Redis] ✓ Connected');
     } catch (err) {
       redisError = (err as any)?.message || String(err);
       console.warn('[Redis] ✗ Connection failed:', redisError);
@@ -67,7 +60,6 @@ async function initRedis() {
 
 export function publishOrderUpdate(orderId: string, payload: any) {
   if (!pub || !redisReady) {
-    console.warn(`[Redis] Not connected, skipping publish for order ${orderId}`);
     return Promise.resolve(0);
   }
   return pub.publish(`order:${orderId}`, JSON.stringify(payload)).catch(err => {
@@ -78,7 +70,6 @@ export function publishOrderUpdate(orderId: string, payload: any) {
 
 export function subscribeOrderUpdates(orderId: string, onMessage: (msg: any) => void) {
   if (!sub || !redisReady) {
-    console.warn(`[Redis] Not connected, subscriptions won't work for ${orderId}`);
     return () => {}; // Return a no-op unsubscribe function
   }
   const channel = `order:${orderId}`;
@@ -91,10 +82,8 @@ export function subscribeOrderUpdates(orderId: string, onMessage: (msg: any) => 
       console.error('Invalid message', e);
     }
   };
-  sub.subscribe(channel).then(() => {
-    console.log(`[Redis] Subscribed to channel: ${channel}`);
-  }).catch((err) => {
-    console.error('[Redis] Subscribe error for', channel, err);
+  sub.subscribe(channel).catch((err) => {
+    console.error('[Redis] Subscribe error:', err);
   });
   sub.on('message', handler);
   return () => {

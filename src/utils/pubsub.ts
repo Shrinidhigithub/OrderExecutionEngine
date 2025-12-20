@@ -28,3 +28,9 @@ export function subscribeOrderUpdates(orderId: string, onMessage: (msg: any) => 
     sub.removeListener('message', handler);
   };
 }
+
+// Redis health check via PING
+export async function redisHealthCheck() {
+  const pong = await pub.ping();
+  return pong === 'PONG';
+}

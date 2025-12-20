@@ -33,3 +33,9 @@ export async function getOrder(id: string) {
   const r = await pool.query('SELECT * FROM orders WHERE id=$1', [id]);
   return r.rows[0];
 }
+
+// Simple DB health check: runs a lightweight query
+export async function dbHealthCheck() {
+  await pool.query('SELECT 1');
+  return true;
+}

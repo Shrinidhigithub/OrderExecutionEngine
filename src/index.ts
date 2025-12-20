@@ -2,8 +2,8 @@ import Fastify from 'fastify';
 import websocketPlugin from '@fastify/websocket';
 import { v4 as uuidv4 } from 'uuid';
 import { orderQueue } from './queue/worker';
-import { subscribeOrderUpdates, publishOrderUpdate } from './utils/pubsub';
-import { createOrder, initDb } from './store/orderStore';
+import { subscribeOrderUpdates, publishOrderUpdate, redisHealthCheck } from './utils/pubsub';
+import { createOrder, initDb, dbHealthCheck } from './store/orderStore';
 import { startWorker } from './queue/worker';
 
 const PORT = Number(process.env.PORT || 3000);
@@ -13,7 +13,21 @@ fastify.register(websocketPlugin as any);
 
 // Health check endpoint
 fastify.get('/health', async (request, reply) => {
-  return { status: 'ok', timestamp: new Date().toISOString() };
+  const result: any = { timestamp: new Date().toISOString() };
+  try {
+    await dbHealthCheck();
+    result.database = 'ok';
+  } catch (e) {
+    result.database = 'error';
+  }
+  try {
+    const ok = await redisHealthCheck();
+    result.redis = ok ? 'ok' : 'error';
+  } catch (e) {
+    result.redis = 'error';
+  }
+  result.status = result.database === 'ok' && result.redis === 'ok' ? 'ok' : 'degraded';
+  return result;
 });
 
 fastify.post('/api/orders/execute', async (request, reply) => {

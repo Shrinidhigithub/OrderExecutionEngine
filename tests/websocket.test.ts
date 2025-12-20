@@ -1,8 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { publishOrderUpdate, subscribeOrderUpdates } from '../src/utils/pubsub';
+import { publishOrderUpdate, subscribeOrderUpdates, initRedis } from '../src/utils/pubsub';
 import IORedis from 'ioredis';
 
 describe('WebSocket & PubSub Lifecycle', () => {
+  beforeAll(async () => {
+    // Ensure Redis is initialized before running tests
+    await initRedis();
+    await new Promise((r) => setTimeout(r, 1000));
+  });
+
   it('publishes order update to Redis channel', async () => {
     const orderId = 'test-order-ws-1';
     const redis = new IORedis({ maxRetriesPerRequest: null });
@@ -15,15 +21,15 @@ describe('WebSocket & PubSub Lifecycle', () => {
       receivedData = msg;
     });
 
-    // Give subscription time to connect
-    await new Promise((r) => setTimeout(r, 100));
+    // Wait for subscription to attach
+    await new Promise((r) => setTimeout(r, 800));
 
     // Publish an update
     const testPayload = { status: 'routing', test: true };
     await publishOrderUpdate(orderId, testPayload);
 
-    // Give message time to propagate
-    await new Promise((r) => setTimeout(r, 200));
+    // Wait for message propagation
+    await new Promise((r) => setTimeout(r, 500));
 
     expect(messageReceived).toBe(true);
     expect(receivedData).toEqual(testPayload);
@@ -39,12 +45,12 @@ describe('WebSocket & PubSub Lifecycle', () => {
     const unsub1 = subscribeOrderUpdates(orderId, (msg) => messages1.push(msg));
     const unsub2 = subscribeOrderUpdates(orderId, (msg) => messages2.push(msg));
 
-    await new Promise((r) => setTimeout(r, 100));
+    await new Promise((r) => setTimeout(r, 500));
 
     const testPayload = { status: 'confirmed' };
     await publishOrderUpdate(orderId, testPayload);
 
-    await new Promise((r) => setTimeout(r, 200));
+    await new Promise((r) => setTimeout(r, 500));
 
     expect(messages1.length).toBeGreaterThan(0);
     expect(messages2.length).toBeGreaterThan(0);
@@ -61,7 +67,7 @@ describe('WebSocket & PubSub Lifecycle', () => {
       receivedData = msg;
     });
 
-    await new Promise((r) => setTimeout(r, 100));
+    await new Promise((r) => setTimeout(r, 500));
 
     const completePayload = {
       status: 'confirmed',
@@ -71,7 +77,7 @@ describe('WebSocket & PubSub Lifecycle', () => {
     };
     await publishOrderUpdate(orderId, completePayload);
 
-    await new Promise((r) => setTimeout(r, 200));
+    await new Promise((r) => setTimeout(r, 500));
 
     expect(receivedData).toHaveProperty('status', 'confirmed');
     expect(receivedData).toHaveProperty('txHash', 'abc123xyz');

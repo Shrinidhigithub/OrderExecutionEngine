@@ -200,6 +200,43 @@ confirmed (success with txHash)
 | Testing | Vitest |
 | Mock DEX | Custom implementation |
 
+## Railway Deployment
+
+This project is configured for deployment on Railway.app. The deployment includes:
+
+- **Build**: TypeScript compilation with Nixpacks builder
+- **Start**: Node.js execution of compiled dist/index.js
+- **Environment**: Supports DATABASE_URL and REDIS_URL for PostgreSQL and Redis services
+
+### Deployment Steps
+
+1. **Create Railway Project**
+   - Go to [Railway.app](https://railway.app)
+   - Create a new project or use existing one
+   - Connect your GitHub repository
+
+2. **Add Database Services**
+   - In Railway dashboard, click "New" → "Database" → "PostgreSQL"
+   - Click "New" → "Database" → "Redis"
+   - Railway automatically injects `DATABASE_URL` and `REDIS_URL` environment variables
+
+3. **Deploy**
+   - Push to `main` branch on GitHub
+   - Railway auto-deploys with the connected repo
+   - Watch deployment logs in Railway dashboard
+
+4. **Verify Deployment**
+   ```bash
+   curl https://orderexecutionengine-production-471f.up.railway.app/health
+   ```
+   Should return: `{"status":"ok","timestamp":"..."}`
+
+### Current Deployment
+- **URL**: https://orderexecutionengine-production-471f.up.railway.app/
+- **Status**: Requires Redis and PostgreSQL services to be added to Railway project
+
+See `RAILWAY_SETUP.md` for detailed setup instructions.
+
 ## Deployment Ready
 
 The engine is ready to:

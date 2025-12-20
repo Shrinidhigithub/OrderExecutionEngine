@@ -1,22 +1,33 @@
 import { Pool } from 'pg';
+import { sleep } from '../utils/sleep';
 
 const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:password@127.0.0.1:5432/order_engine';
 const pool = new Pool({ connectionString });
 
-export async function initDb() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS orders (
-      id TEXT PRIMARY KEY,
-      token_in TEXT,
-      token_out TEXT,
-      amount NUMERIC,
-      status TEXT,
-      tx_hash TEXT NULL,
-      error TEXT NULL,
-      created_at TIMESTAMP DEFAULT now(),
-      updated_at TIMESTAMP DEFAULT now()
-    );
-  `);
+export async function initDb(retries = 30, delayMs = 2000) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS orders (
+          id TEXT PRIMARY KEY,
+          token_in TEXT,
+          token_out TEXT,
+          amount NUMERIC,
+          status TEXT,
+          tx_hash TEXT NULL,
+          error TEXT NULL,
+          created_at TIMESTAMP DEFAULT now(),
+          updated_at TIMESTAMP DEFAULT now()
+        );
+      `);
+      return true;
+    } catch (err: any) {
+      const code = err?.code || err?.errno || 'unknown';
+      console.error(`DB connect/init failed (attempt ${attempt}/${retries})`, code);
+      if (attempt === retries) throw err;
+      await sleep(delayMs);
+    }
+  }
 }
 
 export async function createOrder(record: { id: string; tokenIn: string; tokenOut: string; amount: number; status: string }) {

@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { orderQueue } from './queue/worker';
 import { subscribeOrderUpdates, publishOrderUpdate, redisHealthCheck } from './utils/pubsub';
 import { createOrder, initDb, dbHealthCheck } from './store/orderStore';
+import { sleep } from './utils/sleep';
 import { startWorker } from './queue/worker';
 
 const PORT = Number(process.env.PORT || 3000);
@@ -122,6 +123,23 @@ const start = async () => {
     await initDb();
     console.log('Database initialized successfully');
     
+    // Ensure Redis is reachable before starting workers
+    console.log('Checking Redis connectivity...');
+    for (let attempt = 1; attempt <= 30; attempt++) {
+      try {
+        const ok = await redisHealthCheck();
+        if (ok) {
+          console.log('Redis connectivity OK');
+          break;
+        }
+      } catch (e) {
+        // ignore and retry
+      }
+      console.warn(`Redis not reachable yet (attempt ${attempt}/30). Retrying...`);
+      await sleep(2000);
+      if (attempt === 30) throw new Error('Redis unreachable');
+    }
+
     console.log('Starting worker pool...');
     startWorker(10);
     console.log('Worker pool started with 10 concurrent workers');

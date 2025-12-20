@@ -1,38 +1,58 @@
 import IORedis from 'ioredis';
 
 const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
-const redisOpts = { maxRetriesPerRequest: null, lazyConnect: true } as const;
+const redisOpts = { maxRetriesPerRequest: null } as const;
 let pub: IORedis | null = null;
 let sub: IORedis | null = null;
 let redisReady = false;
 let redisError: string | null = null;
+let initPromise: Promise<void> | null = null;
+
+// Initialize Redis immediately and eagerly
+function createRedisConnections() {
+  if (pub && sub) return Promise.resolve();
+  if (initPromise) return initPromise;
+  
+  initPromise = (async () => {
+    try {
+      pub = new IORedis(redisUrl, redisOpts);
+      sub = new IORedis(redisUrl, redisOpts);
+      
+      // Set up error handlers that don't crash
+      pub.on('error', (err) => {
+        redisError = (err as any)?.message || String(err);
+        console.warn('[Redis] Pub connection error:', redisError);
+      });
+      sub.on('error', (err) => {
+        redisError = (err as any)?.message || String(err);
+        console.warn('[Redis] Sub connection error:', redisError);
+      });
+      
+      // Wait for connections to establish
+      await Promise.race([
+        Promise.all([pub.ping(), sub.ping()]),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Redis connection timeout')), 5000))
+      ]);
+      
+      redisReady = true;
+      redisError = null;
+      console.log('[Redis] ✓ Connected');
+    } catch (err) {
+      redisError = (err as any)?.message || String(err);
+      console.warn('[Redis] ✗ Connection failed:', redisError);
+      redisReady = false;
+      // Continue without Redis
+    }
+  })();
+  
+  return initPromise;
+}
+
+// Initialize immediately when module loads
+createRedisConnections().catch(e => console.warn('[Redis] Init error:', e));
 
 async function initRedis() {
-  if (pub && sub) return;
-  try {
-    pub = new IORedis(redisUrl, redisOpts);
-    sub = new IORedis(redisUrl, redisOpts);
-    
-    // Set up error handlers that don't crash
-    pub.on('error', (err) => {
-      redisError = (err as any)?.message || String(err);
-      console.warn('[Redis] Pub connection error:', redisError);
-    });
-    sub.on('error', (err) => {
-      redisError = (err as any)?.message || String(err);
-      console.warn('[Redis] Sub connection error:', redisError);
-    });
-    
-    await pub.connect();
-    await sub.connect();
-    redisReady = true;
-    redisError = null;
-    console.log('[Redis] ✓ Connected');
-  } catch (err) {
-    redisError = (err as any)?.message || String(err);
-    console.warn('[Redis] ✗ Connection failed:', redisError);
-    // Continue without Redis
-  }
+  return createRedisConnections();
 }
 
 export function publishOrderUpdate(orderId: string, payload: any) {

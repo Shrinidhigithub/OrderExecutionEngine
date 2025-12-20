@@ -314,7 +314,7 @@ Your implementation shows:
 1. Replace MockDexRouter with real Raydium/Meteora SDKs
 2. Add JWT authentication
 3. Implement rate limiting
-4. Deploy to cloud (Railway, Render, AWS)
+4. Deploy to cloud (Render, AWS)
 5. Set up monitoring/alerting
 
 ### For Order Type Extension

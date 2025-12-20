@@ -451,7 +451,7 @@ order-execution-engine/
    - Replace MockDexRouter with real Raydium/Meteora SDKs
    - Implement authentication (JWT)
    - Add rate limiting
-   - Deploy to cloud (Railway, Render, AWS)
+   - Deploy to cloud (Render, AWS)
    - Set up monitoring/alerting
 
 4. **Extend Order Types:**

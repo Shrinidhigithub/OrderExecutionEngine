@@ -274,7 +274,7 @@ curl -X POST http://localhost:3000/api/orders/execute \
 1. Replace MockDexRouter with real Raydium/Meteora SDKs
 2. Add JWT authentication
 3. Implement rate limiting
-4. Deploy to cloud (Railway, Render, AWS)
+4. Deploy to cloud (Render, AWS)
 5. Set up monitoring/alerting
 
 ### For Extending

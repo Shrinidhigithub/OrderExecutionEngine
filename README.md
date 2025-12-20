@@ -200,42 +200,42 @@ confirmed (success with txHash)
 | Testing | Vitest |
 | Mock DEX | Custom implementation |
 
-## Railway Deployment
+## Render Deployment
 
-This project is configured for deployment on Railway.app. The deployment includes:
+This project is deployed on Render.com with the following services:
 
-- **Build**: TypeScript compilation with Nixpacks builder
-- **Start**: Node.js execution of compiled dist/index.js
-- **Environment**: Supports DATABASE_URL and REDIS_URL for PostgreSQL and Redis services
+- **Web Service**: Node.js application running the Order Execution Engine
+- **PostgreSQL**: Managed PostgreSQL database
+- **Redis**: Managed Redis instance for queues and pub/sub
+
+### Live Deployment
+- **URL**: https://orderexecutionengine-uaws.onrender.com
+- **Health Check**: https://orderexecutionengine-uaws.onrender.com/health
 
 ### Deployment Steps
 
-1. **Create Railway Project**
-   - Go to [Railway.app](https://railway.app)
-   - Create a new project or use existing one
+1. **Create Render Account**
+   - Go to [Render.com](https://render.com)
    - Connect your GitHub repository
 
 2. **Add Database Services**
-   - In Railway dashboard, click "New" → "Database" → "PostgreSQL"
-   - Click "New" → "Database" → "Redis"
-   - Railway automatically injects `DATABASE_URL` and `REDIS_URL` environment variables
+   - Create a PostgreSQL database in Render dashboard
+   - Create a Redis instance in Render dashboard
+   - Copy the connection URLs
 
-3. **Deploy**
-   - Push to `main` branch on GitHub
-   - Railway auto-deploys with the connected repo
-   - Watch deployment logs in Railway dashboard
+3. **Create Web Service**
+   - Create new Web Service from your GitHub repo
+   - Set environment variables:
+     - `DATABASE_URL`: PostgreSQL connection string
+     - `REDIS_URL`: Redis connection string
+   - Build command: `npm install && npm run build`
+   - Start command: `node dist/index.js`
 
 4. **Verify Deployment**
    ```bash
-   curl https://orderexecutionengine-production-471f.up.railway.app/health
+   curl https://orderexecutionengine-uaws.onrender.com/health
    ```
-   Should return: `{"status":"ok","timestamp":"..."}`
-
-### Current Deployment
-- **URL**: https://orderexecutionengine-production-471f.up.railway.app/
-- **Status**: Requires Redis and PostgreSQL services to be added to Railway project
-
-See `RAILWAY_SETUP.md` for detailed setup instructions.
+   Should return: `{"database":"ok","redis":"ok","status":"ok"}`
 
 ## Deployment Ready
 

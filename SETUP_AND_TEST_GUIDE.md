@@ -361,7 +361,7 @@ npm run test
 5. **Deploy to Production**
    - Use hosted Redis (Redis Enterprise, AWS ElastiCache)
    - Use managed PostgreSQL (AWS RDS, Azure Database)
-   - Deploy app to cloud (Heroku, Railway, Render)
+   - Deploy app to cloud (Render, Heroku, AWS)
 
 ## Support
 
